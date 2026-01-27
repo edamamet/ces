@@ -226,7 +226,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     break;
                 default: break;
             }
-            app->Speed = SDL_fabsf(app->TrueEval.Eval01 - previousEval);
+            app->Speed = SDL_fabsf(app->TrueEval.Eval01 - app->AnimatedEval.Eval01);
             app->TrueEval.Eval = (app->TrueEval.Eval01 - 0.5f) * 2 * MAX_SCORE;
         }
 
