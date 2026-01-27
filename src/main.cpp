@@ -1,3 +1,5 @@
+#include "SDL3/SDL_rect.h"
+#include "SDL3/SDL_render.h"
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -28,6 +30,8 @@ struct App {
     Eval TrueEval;
     Eval AnimatedEval;
     float Speed;
+
+    bool DisplayFPS;
 };
 
 void CalculateDeltaTime(App *app) {
@@ -88,7 +92,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_Log("Initializing game data");
     app->TrueEval.Eval01 = 0.5f;
     app->AnimatedEval.Eval01 = 0.5f;
-
+    
     SDL_Log("Welcome to ces!");
     return SDL_APP_CONTINUE;
 }
@@ -143,6 +147,32 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         TTF_DestroyText(text);
     }
 
+    if (app->DisplayFPS) {
+        char rawText[10]; // xxxxx fps
+        SDL_snprintf(rawText, sizeof(rawText), "%.0f fps", 1.0 / app->Delta);
+        TTF_Text *text = TTF_CreateText(app->TextEngine, app->ItalicFont, rawText, 0);
+        int textWidth;
+        TTF_MeasureString(app->ItalicFont, rawText, 0, 0, &textWidth, nullptr);
+
+        float padding = 10.0f;
+        float w = textWidth + padding;
+        float h = FONT_SIZE + padding;
+
+        int windowWidth, windowHeight;
+        SDL_GetWindowSize(app->Window, &windowWidth, &windowHeight);
+
+        float centerX = (float)windowWidth/2;
+        float centerY = (float)windowHeight/2;
+
+        SDL_FRect debugBg {centerX-(w/2), centerY-(h/2), w, h};
+        SDL_SetRenderDrawColor(app->Renderer, DEBUG_BG.r, DEBUG_BG.g, DEBUG_BG.b, DEBUG_BG.a);
+        SDL_RenderFillRect(app->Renderer, &debugBg);
+        TTF_SetTextColor(text, DEBUG_FG.r, DEBUG_FG.g, DEBUG_FG.b, DEBUG_FG.a);
+        TTF_DrawRendererText(text, centerX - (float)textWidth/2, centerY - (float)FONT_SIZE / 2);
+
+        TTF_DestroyText(text);
+    }
+
     SDL_RenderPresent(app->Renderer);
     return SDL_APP_CONTINUE;
 }
@@ -190,6 +220,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     break;
                 case SDL_SCANCODE_EQUALS:
                     app->TrueEval.Eval01 = 0.5f;
+                    break;
+                case SDL_SCANCODE_F: 
+                    app->DisplayFPS = !app->DisplayFPS;
                     break;
                 default: break;
             }
