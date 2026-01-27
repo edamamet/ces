@@ -69,7 +69,7 @@ void HandleAdjustment(App *app) {
     if (app->TimeSinceLastPress >= MAX_ADJUSTMENT_TIME) return;
     if (app->AdjustmentTimer <= 0) {
         float factor = ((MAX_ADJUSTMENT_TIME - app->TimeSinceLastPress) / MAX_ADJUSTMENT_TIME);
-        SetEval01(app, app->TrueEval.Eval01 + ((SDL_randf() * 2) - 1) * factor * 0.05f);
+        SetEval01(app, app->TrueEval.Eval01 + ((SDL_randf() * 2) - 1) * SDL_pow(factor, 1.5f) * 0.05f);
         float nextTime = SDL_min(app->TimeSinceLastPress * SDL_randf(), 0.75f);
         app->AdjustmentTimer = nextTime;
     }
