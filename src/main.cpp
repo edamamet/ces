@@ -154,6 +154,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
     App* app = (App*)*appstate;
 
+    SDL_Log("Querying render driver support...");
+    for (int i = 0; i < SDL_GetNumRenderDrivers(); i++) {
+        SDL_Log("  - %s", SDL_GetRenderDriver(i));
+    }
+
+
     SDL_Log("Creating window and renderer...");
     if (!SDL_CreateWindowAndRenderer("ces", 100, 600, SDL_WINDOW_RESIZABLE|SDL_WINDOW_BORDERLESS, &app->Window, &app->Renderer)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create window/renderer: %s", SDL_GetError());
