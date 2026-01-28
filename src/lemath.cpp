@@ -9,3 +9,7 @@ float MoveTowards(float current, float target, float maxDelta) {
     }
     return current + maxDelta * (delta > 0.0f ? 1.0f : -1.0f);
 }
+
+float Lerp(float a, float b, float t) {
+    return b*t + (1-t)*a;
+}

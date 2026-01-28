@@ -222,7 +222,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     SDL_SetRenderDrawColor(app->Renderer, WHITE.r, WHITE.g, WHITE.b, WHITE.a);
     int windowWidth, windowHeight;
     SDL_GetWindowSize(app->Window, &windowWidth, &windowHeight);
-    float y = std::lerp((float)windowHeight, 0, app->AnimatedEval.Eval01);
+    float y = Lerp((float)windowHeight, 0, app->AnimatedEval.Eval01);
     SDL_FRect white { 0,y,(float)windowWidth,(float)windowHeight };
     SDL_RenderFillRect(app->Renderer, &white);
 
