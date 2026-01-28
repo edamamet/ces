@@ -4,6 +4,7 @@ include(FetchContent)
 add_library(${PROJECT_NAME} INTERFACE)
 
 set(SDLTTF_VENDORED ON)
+set(FETCHCONTENT_BASE_DIR ${CMAKE_SOURCE_DIR}/deps)
 
 FetchContent_Declare(
     SDL3
