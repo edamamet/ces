@@ -330,7 +330,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                 case SDL_SCANCODE_SLASH:
                 {
                     if (app->SettingsWindow != nullptr || app->SettingsRenderer != nullptr) {
-                        SDL_Log("Settings window is already active, aborting");
+                        SDL_Log("Settings window is already active, focusing settings...");
+                        SDL_RaiseWindow(app->SettingsWindow);
                         break;
                     }
                     if (!SDL_CreateWindowAndRenderer("", 600, 400, 0, &app->SettingsWindow, &app->SettingsRenderer)) {
