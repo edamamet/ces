@@ -232,7 +232,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         char rawText[6]; // +xx.x\0
         if (app->IsCheckmate) {
-            SDL_snprintf(rawText, sizeof(rawText), "M%i", app->CheckmateMoves);
+            if (app->CheckmateMoves == 0) {
+                SDL_snprintf(rawText, sizeof(rawText), "1-0");
+            } else {
+                SDL_snprintf(rawText, sizeof(rawText), "M%i", app->CheckmateMoves);
+            }
         } else {
             SDL_snprintf(rawText, sizeof(rawText), "+%.1f", app->TrueEval.Eval);
         }
@@ -252,7 +256,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         char rawText[6]; // -xx.x\0
         if (app->IsCheckmate) {
-            SDL_snprintf(rawText, sizeof(rawText), "M%i", app->CheckmateMoves);
+            if (app->CheckmateMoves == 0) {
+                SDL_snprintf(rawText, sizeof(rawText), "0-1");
+            } else {
+                SDL_snprintf(rawText, sizeof(rawText), "M%i", app->CheckmateMoves);
+            }
         } else {
             SDL_snprintf(rawText, sizeof(rawText), "%.1f", app->TrueEval.Eval);
         }
@@ -437,9 +445,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     break;
                 case SDL_SCANCODE_0:
                     if (app->IsWhiteModDown) {
-                        SetCheckmate(app, Side::White, 10);
+                        SetCheckmate(app, Side::White, 0);
                     } else if (app->IsBlackModDown) {
-                        SetCheckmate(app, Side::Black, 10);
+                        SetCheckmate(app, Side::Black, 0);
                     } else {
                         app->IsCheckmate = false;
                         ResetAdjustmentTime(app);
