@@ -461,6 +461,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     }
                     break;
                 case SDL_SCANCODE_EQUALS:
+                    app->IsCheckmate = false;
                     app->CanAdjust = false;
                     SetEval01(app, 0.5f);
                     break;
