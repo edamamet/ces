@@ -1,4 +1,5 @@
 #include "SDL3/SDL_stdinc.h"
+#include <cfloat>
 #include <cstdlib>
 #include <iterator>
 #define SDL_MAIN_USE_CALLBACKS
@@ -127,7 +128,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_Log("Initializing game data");
     app->TrueEval.Eval01 = 0.5f;
     app->AnimatedEval.Eval01 = 0.5f;
-    app->TimeSinceLastPress = MAXFLOAT;
+    app->TimeSinceLastPress = FLT_MAX;
     
     SDL_Log("Welcome to ces!");
     return SDL_APP_CONTINUE;
