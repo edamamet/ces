@@ -271,7 +271,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_snprintf(rawText, sizeof(rawText), "%.1f", app->TrueEval.Eval);
         }
         TTF_Text *text = TTF_CreateText(app->TextEngine, app->RegularFont, rawText , 0);
-        TTF_SetTextColor(text, WHITE.r, WHITE.g, WHITE.g, WHITE.a);
+        TTF_SetTextColor(text, WHITE.r, WHITE.g, WHITE.b, WHITE.a);
         int textWidth;
         TTF_MeasureString(app->RegularFont, rawText, 0, 0, &textWidth, nullptr);
         float x = ((float)windowWidth / 2)-((float)textWidth / 2);
