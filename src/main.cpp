@@ -4,8 +4,6 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cfloat>
 
-#include <cmath>
-
 #include "ces_config.h"
 #include "typedefs.h"
 #include "lemath.h"
