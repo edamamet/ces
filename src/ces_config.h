@@ -14,6 +14,6 @@ constexpr float MAX_SCORE = 10.0f;
 
 constexpr double MAX_ADJUSTMENT_TIME = 4;
 
-constexpr int BORDER_SIZE = 5;
+constexpr int BORDER_SIZE = 10;
 
 constexpr const char* SETTINGS_BG_PATH = "asset/sprite/settings-bg.png";
