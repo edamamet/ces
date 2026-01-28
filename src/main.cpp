@@ -19,6 +19,9 @@ struct App {
     SDL_Window *Window;
     SDL_Renderer *Renderer;
 
+    SDL_Window *SettingsWindow;
+    SDL_Renderer *SettingsRenderer;
+
     TTF_TextEngine *TextEngine;
     TTF_Font *RegularFont;
     TTF_Font *ItalicFont;
@@ -254,15 +257,25 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     }
 
     SDL_RenderPresent(app->Renderer);
+
     return SDL_APP_CONTINUE;
 }
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
     App* app = (App*)appstate;
     switch (event->type) {
-        case SDL_EVENT_QUIT:
+        case SDL_EVENT_QUIT: 
+            return SDL_APP_SUCCESS;
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED: 
         {
-            return SDL_APP_SUCCESS;
+            SDL_Window* window = SDL_GetWindowFromID(event->window.windowID);
+            if (window == app->SettingsWindow) {
+                SDL_DestroyWindow(app->SettingsWindow);
+                SDL_DestroyRenderer(app->SettingsRenderer);
+                app->SettingsWindow = nullptr;
+                app->SettingsRenderer = nullptr;
+            } else {
+                return SDL_APP_SUCCESS;
+            }
         } break;
         case SDL_EVENT_KEY_DOWN:
         {
@@ -314,6 +327,17 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                 case SDL_SCANCODE_F: 
                     app->DisplayFPS = !app->DisplayFPS;
                     break;
+                case SDL_SCANCODE_SLASH:
+                {
+                    if (app->SettingsWindow != nullptr || app->SettingsRenderer != nullptr) {
+                        SDL_Log("Settings window is already active, aborting");
+                        break;
+                    }
+                    if (!SDL_CreateWindowAndRenderer("", 600, 400, 0, &app->SettingsWindow, &app->SettingsRenderer)) {
+                        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create window/renderer: %s", SDL_GetError());
+                    }
+                    break;
+                }
                 default: break;
             }
         }
