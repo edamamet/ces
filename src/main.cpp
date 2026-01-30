@@ -7,25 +7,34 @@
 #include "ces_config.h"
 #include "typedefs.h"
 #include "lemath.h"
+#include "sdl_helpers.h"
 
 struct Eval {
     float Eval;
     float Eval01;
 };
 
+struct SettingsScreen {
+    SDL_Window *Window;
+    SDL_Renderer *Renderer;
+    TTF_TextEngine *TextEngine;
+
+    SDL_Texture *BgTexture;
+
+    TTF_Text* TitleText;
+};
+
 struct App {
     SDL_Window *Window;
     SDL_Renderer *Renderer;
 
-    SDL_Window *SettingsWindow;
-    SDL_Renderer *SettingsRenderer;
-
-    SDL_Surface *SettingsBgSurface;
-    SDL_Texture *SettingsBgTexture;
+    SettingsScreen SettingsScreen;
 
     TTF_TextEngine *TextEngine;
     TTF_Font *RegularFont;
     TTF_Font *ItalicFont;
+
+    SDL_Surface *SettingsBgSurface;
 
     float Delta;
     u64 PreviousTicks;
@@ -50,6 +59,88 @@ enum Side {
     Black,
     White
 };
+
+void CreateSettingsScreen(App *app, SettingsScreen *screen) {
+    SDL_Log("Creating settings screen...");
+    if (!SDL_CreateWindowAndRenderer("", 600, 400, 0, &screen->Window, &screen->Renderer)) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create window/renderer: %s", SDL_GetError());
+        SDL_Event quitEvent;
+        quitEvent.type = SDL_EVENT_QUIT;
+        SDL_PushEvent(&quitEvent);
+    }
+
+    SDL_SetRenderVSync(screen->Renderer, 0);
+
+    screen->BgTexture = SDL_CreateTextureFromSurface(screen->Renderer, app->SettingsBgSurface);
+    if (screen->BgTexture == nullptr) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to initialize resources for settings window: %s", SDL_GetError());
+        SDL_Event quitEvent;
+        quitEvent.type = SDL_EVENT_QUIT;
+        SDL_PushEvent(&quitEvent);
+    }
+
+    screen->TextEngine = TTF_CreateRendererTextEngine(screen->Renderer);
+    if (screen->TextEngine == nullptr) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create text engine: %s", SDL_GetError());
+        SDL_Event quitEvent;
+        quitEvent.type = SDL_EVENT_QUIT;
+        SDL_PushEvent(&quitEvent);
+    }
+
+    screen->TitleText = TTF_CreateText(screen->TextEngine, app->RegularFont, "Settings", 0);
+}
+
+void CleanSettingsScreen(SettingsScreen *screen) {
+    SDL_Log("Cleaning up settings screen");
+    SDL_DestroyWindow(screen->Window);
+    SDL_DestroyRenderer(screen->Renderer);
+    SDL_DestroyTexture(screen->BgTexture);
+    TTF_DestroyText(screen->TitleText);
+    TTF_DestroyRendererTextEngine(screen->TextEngine);
+
+    screen->Window = nullptr;
+    screen->Renderer = nullptr;
+    screen->BgTexture = nullptr;
+    screen->TextEngine = nullptr;
+    screen->TitleText = nullptr;
+}
+
+void RenderSettings(App *app) {
+    SettingsScreen screen = app->SettingsScreen;
+    SDL_RenderTextureTiled(screen.Renderer, screen.BgTexture, nullptr, 1, nullptr);
+    SetTextColor(screen.TitleText, DEFAULT_SETTINGS.WhiteColor);
+
+    TTF_SetTextString(screen.TitleText, "Settings", 0);
+    TTF_DrawRendererText(screen.TitleText, 20, 20);
+
+    TTF_SetTextString(screen.TitleText, "Black", 0);
+    TTF_DrawRendererText(screen.TitleText, 20, 70);
+
+    TTF_SetTextString(screen.TitleText, "White", 0);
+    TTF_DrawRendererText(screen.TitleText, 20, 120);
+    
+    int w, h;
+    SDL_GetWindowSize(screen.Window, &w, &h);
+
+    constexpr float buttonW = {100};
+    constexpr float buttonH = {30};
+
+    SetRenderDrawColor(screen.Renderer, {40,40,40,255});
+
+    SDL_FRect blackButton {w - buttonW - 30, 70, buttonW, buttonH};
+    SDL_RenderFillRect(screen.Renderer, &blackButton);
+
+    SDL_FRect whiteButton {w - buttonW - 30, 120, buttonW, buttonH};
+    SDL_RenderFillRect(screen.Renderer, &whiteButton);
+
+    TTF_SetTextString(screen.TitleText, "Set", 0);
+    int setW;
+    TTF_MeasureString(app->RegularFont, "Set", 0, 0, &setW, nullptr);
+    TTF_DrawRendererText(screen.TitleText, (float)w - 30 - ((buttonW + (float)setW)/2), 70);
+
+    TTF_SetTextString(screen.TitleText, "Set", 0);
+    TTF_DrawRendererText(screen.TitleText, (float)w - 30 - ((buttonW + (float)setW)/2), 120);
+}
 
 SDL_HitTestResult SDLCALL WindowHit(SDL_Window *window, const SDL_Point *area, void *data) {
     (void) data;
@@ -163,13 +254,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         SDL_Log("  - %s", SDL_GetRenderDriver(i));
     }
 
-
     SDL_Log("Creating window and renderer...");
     if (!SDL_CreateWindowAndRenderer("ces", 100, 600, SDL_WINDOW_RESIZABLE|SDL_WINDOW_BORDERLESS, &app->Window, &app->Renderer)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
+    SDL_SetRenderVSync(app->Renderer, 0);
     SDL_RaiseWindow(app->Window);
 
     if (!SDL_SetWindowHitTest(app->Window, WindowHit, app)) {
@@ -218,6 +309,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_Log("Welcome to ces!");
     return SDL_APP_CONTINUE;
 }
+
 SDL_AppResult SDL_AppIterate(void *appstate) {
     App* app = (App*)appstate;
 
@@ -226,10 +318,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
     app->AnimatedEval.Eval01 = MoveTowards(app->AnimatedEval.Eval01, app->TrueEval.Eval01, app->Speed * app->Delta);
 
-    SDL_SetRenderDrawColor(app->Renderer, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
+    SetRenderDrawColor(app->Renderer, DEFAULT_SETTINGS.BlackColor);
     SDL_RenderClear(app->Renderer);
 
-    SDL_SetRenderDrawColor(app->Renderer, WHITE.r, WHITE.g, WHITE.b, WHITE.a);
+    SetRenderDrawColor(app->Renderer, DEFAULT_SETTINGS.WhiteColor);
     int windowWidth, windowHeight;
     SDL_GetWindowSize(app->Window, &windowWidth, &windowHeight);
     float y = Lerp((float)windowHeight, 0, app->AnimatedEval.Eval01);
@@ -251,7 +343,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_snprintf(rawText, sizeof(rawText), "+%.1f", app->TrueEval.Eval);
         }
         TTF_Text *text = TTF_CreateText(app->TextEngine, app->RegularFont, rawText , 0);
-        TTF_SetTextColor(text, BLACK.r, BLACK.g, BLACK.g, BLACK.a);
+        SetTextColor(text, DEFAULT_SETTINGS.BlackColor);
         int textWidth;
         TTF_MeasureString(app->RegularFont, rawText, 0, 0, &textWidth, nullptr);
         float x = ((float)windowWidth / 2)-((float)textWidth / 2);
@@ -275,7 +367,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_snprintf(rawText, sizeof(rawText), "%.1f", app->TrueEval.Eval);
         }
         TTF_Text *text = TTF_CreateText(app->TextEngine, app->RegularFont, rawText , 0);
-        TTF_SetTextColor(text, WHITE.r, WHITE.g, WHITE.b, WHITE.a);
+        SetTextColor(text, DEFAULT_SETTINGS.WhiteColor);
         int textWidth;
         TTF_MeasureString(app->RegularFont, rawText, 0, 0, &textWidth, nullptr);
         float x = ((float)windowWidth / 2)-((float)textWidth / 2);
@@ -314,12 +406,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
     SDL_RenderPresent(app->Renderer);
 
-    if (app->SettingsWindow != nullptr) {
-        SDL_RenderClear(app->SettingsRenderer);
+    if (app->SettingsScreen.Window != nullptr) {
+        SDL_RenderClear(app->SettingsScreen.Renderer);
         
-        SDL_RenderTextureTiled(app->SettingsRenderer, app->SettingsBgTexture, nullptr, 1, nullptr);
+        RenderSettings(app);
 
-        SDL_RenderPresent(app->SettingsRenderer);
+        SDL_RenderPresent(app->SettingsScreen.Renderer);
     }
 
     return SDL_APP_CONTINUE;
@@ -332,11 +424,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED: 
         {
             SDL_Window* window = SDL_GetWindowFromID(event->window.windowID);
-            if (window == app->SettingsWindow) {
-                SDL_DestroyWindow(app->SettingsWindow);
-                SDL_DestroyRenderer(app->SettingsRenderer);
-                app->SettingsWindow = nullptr;
-                app->SettingsRenderer = nullptr;
+            if (window == app->SettingsScreen.Window) {
+                CleanSettingsScreen(&app->SettingsScreen);
             } else {
                 return SDL_APP_SUCCESS;
             }
@@ -475,20 +564,13 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     break;
                 case SDL_SCANCODE_SLASH:
                 {
-                    if (app->SettingsWindow != nullptr || app->SettingsRenderer != nullptr) {
+                    SettingsScreen *screen = &app->SettingsScreen;
+                    if (screen->Window != nullptr || screen->Renderer != nullptr) {
                         SDL_Log("Settings window is already active, focusing settings...");
-                        SDL_RaiseWindow(app->SettingsWindow);
+                        SDL_RaiseWindow(screen->Window);
                         break;
                     }
-                    if (!SDL_CreateWindowAndRenderer("", 600, 400, 0, &app->SettingsWindow, &app->SettingsRenderer)) {
-                        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create window/renderer: %s", SDL_GetError());
-                    }
-
-                    app->SettingsBgTexture = SDL_CreateTextureFromSurface(app->SettingsRenderer, app->SettingsBgSurface);
-                    if (app->SettingsBgTexture == nullptr) {
-                        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to initialize resources for settings window: %s", SDL_GetError());
-                        return SDL_APP_FAILURE;
-                    }
+                    CreateSettingsScreen(app, screen);
                     break;
                 }
                 default: break;

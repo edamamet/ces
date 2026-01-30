@@ -1,9 +1,13 @@
 #pragma once
 
 #include "SDL3/SDL_pixels.h"
+#include "./settings.h"
 
-constexpr SDL_Color WHITE = {255,255,255,255};
-constexpr SDL_Color BLACK = {54,51,47,255};
+constexpr Settings DEFAULT_SETTINGS {
+    .BlackColor = {54,51,47,255},
+    .WhiteColor = {255,255,255,255},
+};
+
 constexpr SDL_Color DEBUG_BG = {25,25,25,255};
 constexpr SDL_Color DEBUG_FG = {0,255,255,255};
 
