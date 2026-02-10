@@ -1,5 +1,6 @@
 .cache/*
 build/*
+vsbuild/*
 deps/*
 !deps/CMakeLists.txt
 .DS_Store
