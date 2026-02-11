@@ -354,7 +354,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     app->IsWhiteModDown = true;
                     break;
 
-                    // num keys
+                // num keys
                 case SDL_SCANCODE_1:
                     if (app->IsWhiteModDown) {
                         SetCheckmate(app, Side::White, 1);
@@ -466,7 +466,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                     }
                     break;
                 case SDL_SCANCODE_R:
-                case SDL_SCANCODE_EQUALS:
                     app->IsCheckmate = false;
                     app->CanAdjust = false;
                     app->CheckmateMoves = 0;
@@ -478,6 +477,24 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                 case SDL_SCANCODE_ESCAPE:
                 case SDL_SCANCODE_Q:
                     return SDL_APP_SUCCESS;
+
+                // manual width resizing (because windows sucks)
+                case SDL_SCANCODE_MINUS:
+                {
+                    int windowWidth, windowHeight;
+                    SDL_GetWindowSize(app->Window, &windowWidth, &windowHeight);
+                    SDL_SetWindowSize(app->Window, windowWidth - 10, windowHeight);
+                    break;
+                }
+                case SDL_SCANCODE_EQUALS: 
+                {
+                    int windowWidth, windowHeight;
+                    SDL_GetWindowSize(app->Window, &windowWidth, &windowHeight);
+                    SDL_SetWindowSize(app->Window, windowWidth + 10, windowHeight);
+                    break;
+                }
+                    
+                // settings menu (soon tm)
                 case SDL_SCANCODE_SLASH:
                     {
                         if (app->SettingsWindow != nullptr || app->SettingsRenderer != nullptr) {
