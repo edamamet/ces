@@ -42,6 +42,7 @@ struct App {
 
     bool IsWhiteModDown;
     bool IsBlackModDown;
+    bool IsFastScrollDown;
 
     bool DisplayFPS;
 };
@@ -101,7 +102,7 @@ void SetEval01(App *app, float new01) {
 void SetCheckmate(App *app, Side side, int moves) {
     app->CanAdjust = false;
     app->IsCheckmate = true;
-    app->CheckmateMoves = moves;
+    app->CheckmateMoves = SDL_clamp(moves, 0, 549);
     if (side == Side::White) {
         SetEval01(app, 1);
     } else {
@@ -344,9 +345,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             switch (event->key.scancode) { 
                 // mod keys
                 case SDL_SCANCODE_LSHIFT:
+                    app->IsFastScrollDown = true;
+                    break;               
+                case SDL_SCANCODE_B:
                     app->IsBlackModDown = true;
                     break;
-                case SDL_SCANCODE_RSHIFT:
+                case SDL_SCANCODE_W:
                     app->IsWhiteModDown = true;
                     break;
 
@@ -461,9 +465,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                         SetEval01(app, 1);
                     }
                     break;
+                case SDL_SCANCODE_R:
                 case SDL_SCANCODE_EQUALS:
                     app->IsCheckmate = false;
                     app->CanAdjust = false;
+                    app->CheckmateMoves = 0;
                     SetEval01(app, 0.5f);
                     break;
                 case SDL_SCANCODE_F: 
@@ -496,13 +502,31 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             {
                 // mod keys
                 switch (event->key.scancode) { 
-                    case SDL_SCANCODE_LSHIFT:
+                    case SDL_SCANCODE_B:
                         app->IsBlackModDown = false;
                         break;
-                    case SDL_SCANCODE_RSHIFT:
+                    case SDL_SCANCODE_W:
                         app->IsWhiteModDown = false;
                         break;
+                    case SDL_SCANCODE_LSHIFT:
+                        app->IsFastScrollDown = false;
+                        break;
                     default: break;
+                }
+            } break;
+        } break;
+        case SDL_EVENT_MOUSE_WHEEL:
+        {
+            if (app->IsWhiteModDown || app->IsBlackModDown) {
+                SetCheckmate(app, app->IsWhiteModDown ? Side::White : Side::Black, (app->CheckmateMoves + (int) event->wheel.y));
+            } else {
+                app->IsCheckmate = false;
+                ResetAdjustmentTime(app);
+
+                if (app->IsFastScrollDown) {
+                    SetEval01(app, (app->TrueEval.Eval01 + (event->wheel.y * (event->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -0.1f : 0.1f))));
+                } else {
+                    SetEval01(app, (app->TrueEval.Eval01 + (event->wheel.y * (event->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -0.01f : 0.01f))));
                 }
             } break;
         }
